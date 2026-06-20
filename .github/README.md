@@ -1,4 +1,5 @@
 <div align="center">
+
 # OTP Service — AWS SNS + Spring Boot
  
 Production-grade SMS OTP service built with Spring Boot 3 & AWS SNS.
@@ -11,6 +12,7 @@ Send and verify one-time passwords via REST API — fully dockerized, no local J
 <img src="https://img.shields.io/badge/-Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=C71A36" alt="Maven" />
  
 </div>
+
 ---
  
 ## API Screenshots
