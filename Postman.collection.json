@@ -1,0 +1,385 @@
+{
+  "info": {
+    "_postman_id": "otp-service-collection",
+    "name": "OTP Service — AWS SNS",
+    "description": "Production-grade OTP Service built with Spring Boot + AWS SNS.\n\nRoutes:\n- POST /api/otp/send     → Send OTP to phone\n- POST /api/otp/verify   → Verify OTP entered by user\n- GET  /api/otp/health   → Health check\n\nSet the `baseUrl` variable to switch between local and production.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Change to your production URL when deploying"
+    },
+    {
+      "key": "phoneNumber",
+      "value": "+91XXXXXXXXXX",
+      "type": "string",
+      "description": "E.164 format phone number — change to your verified SNS number"
+    },
+    {
+      "key": "otp",
+      "value": "",
+      "type": "string",
+      "description": "Paste the OTP received on your phone here before running Verify"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Service is running', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json.data).to.eql('OK');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/otp/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "otp", "health"]
+        },
+        "description": "Basic health check. Run this first to confirm the container is up."
+      },
+      "response": [
+        {
+          "name": "200 OK — Service Running",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/otp/health"
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Service is running\",\n  \"data\": \"OK\",\n  \"timestamp\": \"2026-06-20T10:00:00Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Send OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('OTP sent successfully', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json.data).to.have.property('snsMessageId');",
+              "    pm.expect(json.data.expiresInMinutes).to.be.a('number');",
+              "});",
+              "",
+              "// Auto-save snsMessageId for reference",
+              "const json = pm.response.json();",
+              "if (json.data && json.data.snsMessageId) {",
+              "    pm.collectionVariables.set('snsMessageId', json.data.snsMessageId);",
+              "    console.log('SNS Message ID saved:', json.data.snsMessageId);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/otp/send",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "otp", "send"]
+        },
+        "description": "Sends a 6-digit OTP to the given phone number via AWS SNS.\n\nPhone must be:\n- E.164 format: +91XXXXXXXXXX\n- Verified in AWS SNS sandbox (if not in production)"
+      },
+      "response": [
+        {
+          "name": "200 OK — OTP Sent",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+91XXXXXXXXXX\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/send" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"success\": true,\n  \"message\": \"OTP dispatched\",\n  \"data\": {\n    \"success\": true,\n    \"message\": \"OTP sent successfully to +9198*****10\",\n    \"expiresInMinutes\": 5,\n    \"snsMessageId\": \"abc123-def456-...\"\n  },\n  \"timestamp\": \"2026-06-20T10:00:00Z\"\n}"
+        },
+        {
+          "name": "400 Bad Request — Invalid Phone Format",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"XXXXXXXXXX\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/send" }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"success\": false,\n  \"error\": \"Validation error: Phone number must be in E.164 format (e.g. +91XXXXXXXXXX)\",\n  \"timestamp\": \"2026-06-20T10:00:00Z\"\n}"
+        },
+        {
+          "name": "503 Service Unavailable — SNS Failure",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+91XXXXXXXXXX\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/send" }
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "body": "{\n  \"success\": false,\n  \"error\": \"SMS delivery failed. Please try again later.\",\n  \"timestamp\": \"2026-06-20T10:00:00Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Verify OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200 or 400', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "if (pm.response.code === 200) {",
+              "    pm.test('OTP verified successfully', function () {",
+              "        pm.expect(json.success).to.be.true;",
+              "        pm.expect(json.message).to.eql('Verified');",
+              "    });",
+              "} else {",
+              "    pm.test('Verification failed with reason', function () {",
+              "        pm.expect(json.success).to.be.false;",
+              "        pm.expect(json.error).to.be.a('string');",
+              "    });",
+              "    console.warn('Verify failed:', json.error);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otp\": \"{{otp}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/otp/verify",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "otp", "verify"]
+        },
+        "description": "Verifies the OTP entered by the user.\n\nSteps:\n1. Run 'Send OTP' first\n2. Check your phone for the SMS\n3. Set the `otp` collection variable (top of collection) to the received code\n4. Run this request\n\nPossible outcomes:\n- 200: OTP is valid → authenticated\n- 400: Invalid / Expired / Max attempts exceeded / Not found"
+      },
+      "response": [
+        {
+          "name": "200 OK — OTP Valid",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+91XXXXXXXXXX\",\n  \"otp\": \"482910\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/verify" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Verified\",\n  \"data\": {\n    \"success\": true,\n    \"message\": \"OTP verified successfully. You are now authenticated.\"\n  },\n  \"timestamp\": \"2026-06-20T10:01:00Z\"\n}"
+        },
+        {
+          "name": "400 Bad Request — Invalid OTP",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+91XXXXXXXXXX\",\n  \"otp\": \"000000\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/verify" }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"success\": false,\n  \"error\": \"Invalid OTP. Please check and try again.\",\n  \"timestamp\": \"2026-06-20T10:01:00Z\"\n}"
+        },
+        {
+          "name": "400 Bad Request — OTP Expired",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+91XXXXXXXXXX\",\n  \"otp\": \"482910\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/verify" }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"success\": false,\n  \"error\": \"OTP has expired. Please request a new one.\",\n  \"timestamp\": \"2026-06-20T10:06:00Z\"\n}"
+        },
+        {
+          "name": "400 Bad Request — Max Attempts Exceeded",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+91XXXXXXXXXX\",\n  \"otp\": \"000000\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/otp/verify" }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"success\": false,\n  \"error\": \"Too many failed attempts. Please request a new OTP.\",\n  \"timestamp\": \"2026-06-20T10:01:30Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Send OTP — Validation: Missing Phone",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Validation error returned', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.success).to.be.false;",
+              "    pm.expect(json.error).to.include('Validation error');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/otp/send",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "otp", "send"]
+        },
+        "description": "Edge case test — empty body should return 400 with validation error."
+      },
+      "response": []
+    },
+    {
+      "name": "Send OTP — Validation: Wrong Phone Format",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test('E.164 format error returned', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.error).to.include('E.164');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"XXXXXXXXXX\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/otp/send",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "otp", "send"]
+        },
+        "description": "Edge case test — phone without +91 prefix should fail E.164 validation."
+      },
+      "response": []
+    }
+  ]
+}

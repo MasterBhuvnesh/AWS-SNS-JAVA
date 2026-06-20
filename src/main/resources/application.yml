@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: otp-service
+
+# AWS Configuration - all from environment variables
+aws:
+  region: ${AWS_REGION:ap-south-1}
+  access-key: ${AWS_ACCESS_KEY_ID}
+  secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+# OTP Configuration
+otp:
+  expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
+  length: ${OTP_LENGTH:6}
+  max-attempts: ${OTP_MAX_ATTEMPTS:3}
+  sender-id: ${SMS_SENDER_ID:OTPSvc}
+
+# Logging
+logging:
+  level:
+    com.otpservice: INFO
+    software.amazon.awssdk: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
