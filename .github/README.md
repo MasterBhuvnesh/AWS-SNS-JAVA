@@ -28,6 +28,7 @@ Send and verify one-time passwords via REST API — fully dockerized, no local J
 ### Verify OTP
 ![Verify OTP](assets/sns.verifyotp.png)
 <div align="center"><em>POST /api/otp/verify — validates the OTP entered by the user</em></div>
+
 ---
  
 ## Project Structure
