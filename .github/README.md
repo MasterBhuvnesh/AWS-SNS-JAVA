@@ -1,4 +1,4 @@
-\<div align="center">
+<div align="center">
 # OTP Service — AWS SNS + Spring Boot
  
 Production-grade SMS OTP service built with Spring Boot 3 & AWS SNS.
