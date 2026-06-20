@@ -1,10 +1,33 @@
+\<div align="center">
 # OTP Service — AWS SNS + Spring Boot
-
-Production-grade OTP service. Sends and verifies one-time passwords via AWS SNS SMS.
-No Spring Boot or Maven needed locally — everything runs inside Docker.
-
+ 
+Production-grade SMS OTP service built with Spring Boot 3 & AWS SNS.
+Send and verify one-time passwords via REST API — fully dockerized, no local Java needed.
+ 
+<img src="https://img.shields.io/badge/-Java-000000?style=for-the-badge&logo=openjdk&logoColor=ED8B00" alt="Java" />
+<img src="https://img.shields.io/badge/-Spring Boot-000000?style=for-the-badge&logo=springboot&logoColor=6DB33F" alt="Spring Boot" />
+<img src="https://img.shields.io/badge/-AWS SNS-000000?style=for-the-badge&logo=amazonaws&logoColor=FF9900" alt="AWS SNS" />
+<img src="https://img.shields.io/badge/-Docker-000000?style=for-the-badge&logo=docker&logoColor=2496ED" alt="Docker" />
+<img src="https://img.shields.io/badge/-Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=C71A36" alt="Maven" />
+ 
+</div>
 ---
+ 
+## API Screenshots
+ 
+### Health Check
+![Health Check](assets/sns.healthcheck.png)
+<div align="center"><em>GET /api/otp/health — confirms the service is up and running</em></div>
 
+### Send OTP
+![Send OTP](assets/sns.sendotp.png)
+<div align="center"><em>POST /api/otp/send — triggers an SMS to the given phone number via AWS SNS</em></div>
+
+### Verify OTP
+![Verify OTP](assets/sns.verifyotp.png)
+<div align="center"><em>POST /api/otp/verify — validates the OTP entered by the user</em></div>
+---
+ 
 ## Project Structure
 
 ```
